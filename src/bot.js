@@ -22,6 +22,7 @@ client.on('interactionCreate', (interaction) => {
         if(currentTime < cooldownEndtime) {
             interaction.reply(`The server was recently started. Please wait ${Math.ceil((cooldownEndtime - currentTime) / 1000)} seconds.`);
         } else {
+            // Start server script
             cooldownEndtime = currentTime + cooldownLength;
             interaction.reply("Server started");
         }
