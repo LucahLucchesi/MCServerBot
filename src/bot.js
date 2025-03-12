@@ -1,5 +1,6 @@
 require('dotenv').config();
 const { Client, GatewayIntentBits, ActivityType, REST, Routes } = require('discord.js');
+const { exec } = require('child_process')
 const client = new Client({
     intents: [GatewayIntentBits.Guilds]
 });
@@ -27,21 +28,22 @@ client.on('ready', () => {
     // Attempts to register command
     (async () => {
         try {
-            console.log('Registering commands...')
+            console.log('Registering commands...');
             await rest.put(
                 Routes.applicationGuildCommands(process.env.CLIENT_ID, process.env.GUILD_ID),
                 { body: commands}
-            )
-            console.log('Commands registered.')
+            );
+            console.log('Commands registered.');
         } catch (error) {
             console.log(`Error: ${error}`);
-        }
+        };
     })();
     console.log(`Logged in as ${client.user.tag}.`);
     client.user.setActivity({
         name: 'Minecraft',
-    })
-})
+        type: ActivityType.Playing
+    });
+});
 
 // Stores when the cooldown is over
 let cooldownEndtime = 0;
@@ -55,30 +57,40 @@ client.on('interactionCreate', (interaction) => {
     }
     // Start command
     if (interaction.commandName == 'start') {
-        const currentTime = Date.now()
+        const currentTime = Date.now();
         if(currentTime < cooldownEndtime) {
             interaction.reply(`The server was recently started/stopped. Please wait ${Math.ceil((cooldownEndtime - currentTime) / 1000)} seconds.`);
         } else {
-            cooldownEndtime = currentTime + cooldownLength;
-
-            // Start the server
-
-            interaction.reply("Server started");
+            exec(`sudo systemctl start ${process.env.SERVICE}`, (error, stdout, stderr) => {
+                if(error){
+                    return interaction.reply(`Node error: ${error.message}`);
+                }
+                if (stderr) {
+                    return interaction.reply(`System error: ${stderr}`);
+                }
+                interaction.reply(`Minecraft server started: ${stdout}`);
+                cooldownEndtime = currentTime + cooldownLength;
+            });
         }
     }
     // Stop command
     if (interaction.commandName == 'stop') {
-        const currentTime = Date.now()
+        const currentTime = Date.now();
         if(currentTime < cooldownEndtime) {
             interaction.reply(`The server was recently started/stopped. Please wait ${Math.ceil((cooldownEndtime - currentTime) / 1000)} seconds.`);
         } else {
-            cooldownEndtime = currentTime + cooldownLength;
-
-            // Stop the server
-
-            interaction.reply("Server stopped");
+            exec(`sudo systemctl stop ${process.env.SERVICE}`, (error, stdout, stderr) => {
+                if(error){
+                    return interaction.reply(`Node error: ${error.message}`);
+                }
+                if (stderr) {
+                    return interaction.reply(`System error: ${stderr}`);
+                }
+                interaction.reply(`Minecraft server started: ${stdout}`);
+                cooldownEndtime = currentTime + cooldownLength;
+            });
         }
     }
-})
+});
 
 client.login(process.env.TOKEN);
