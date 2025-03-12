@@ -68,7 +68,7 @@ client.on('interactionCreate', (interaction) => {
                 if (stderr) {
                     return interaction.reply(`System error: ${stderr}`);
                 }
-                interaction.reply(`Minecraft server started: ${stdout}`);
+                interaction.reply("Minecraft server started!");
                 cooldownEndtime = currentTime + cooldownLength;
             });
         }
@@ -86,7 +86,7 @@ client.on('interactionCreate', (interaction) => {
                 if (stderr) {
                     return interaction.reply(`System error: ${stderr}`);
                 }
-                interaction.reply(`Minecraft server started: ${stdout}`);
+                interaction.reply("Minecraft server stopped!");
                 cooldownEndtime = currentTime + cooldownLength;
             });
         }
