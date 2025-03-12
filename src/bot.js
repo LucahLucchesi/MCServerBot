@@ -1,13 +1,50 @@
 require('dotenv').config();
-const { Client, GatewayIntentBits, ActivityType } = require('discord.js');
+const { Client, GatewayIntentBits, ActivityType, REST, Routes } = require('discord.js');
 const client = new Client({
     intents: [GatewayIntentBits.Guilds]
 });
-// Cooldown time in milliseconds
-const cooldownLength = 5 * 60 * 1000;
+// Command cooldown in milliseconds (m * s * ms)
+const cooldownLength = 1 * 60 * 1000;
+
+const commands = [
+{
+        name: 'ping',
+        description: 'Replies with pong!'
+    },
+    {
+        name: 'start',
+        description: 'Starts the server'
+    },
+    {
+        name: 'stop',
+        description: 'Stops the server'
+    }
+];
+
+const rest = new REST({ version: '10'}).setToken(process.env.TOKEN);
+
+client.on('ready', () => {
+    // Attempts to register command
+    (async () => {
+        try {
+            console.log('Registering commands...')
+            await rest.put(
+                Routes.applicationGuildCommands(process.env.CLIENT_ID, process.env.GUILD_ID),
+                { body: commands}
+            )
+            console.log('Commands registered.')
+        } catch (error) {
+            console.log(`Error: ${error}`);
+        }
+    })();
+    console.log(`Logged in as ${client.user.tag}.`);
+    client.user.setActivity({
+        name: 'Minecraft',
+    })
+})
+
 // Stores when the cooldown is over
 let cooldownEndtime = 0;
-
 
 // Handles commands
 client.on('interactionCreate', (interaction) => {
@@ -16,29 +53,32 @@ client.on('interactionCreate', (interaction) => {
     if (interaction.commandName == 'ping') {
         interaction.reply("pong!");
     }
-    // Server start script here
+    // Start command
     if (interaction.commandName == 'start') {
         const currentTime = Date.now()
         if(currentTime < cooldownEndtime) {
-            interaction.reply(`The server was recently started. Please wait ${Math.ceil((cooldownEndtime - currentTime) / 1000)} seconds.`);
+            interaction.reply(`The server was recently started/stopped. Please wait ${Math.ceil((cooldownEndtime - currentTime) / 1000)} seconds.`);
         } else {
-            // Start server script
             cooldownEndtime = currentTime + cooldownLength;
+
+            // Start the server
+
             interaction.reply("Server started");
         }
     }
-    // Server stop script here
+    // Stop command
     if (interaction.commandName == 'stop') {
-        interaction.reply("Server stopped");
-    }
-})
+        const currentTime = Date.now()
+        if(currentTime < cooldownEndtime) {
+            interaction.reply(`The server was recently started/stopped. Please wait ${Math.ceil((cooldownEndtime - currentTime) / 1000)} seconds.`);
+        } else {
+            cooldownEndtime = currentTime + cooldownLength;
 
-client.on('ready', () => {
-    console.log(`Logged in as ${client.user.tag}.`);
-    client.user.setActivity({
-        name: 'Minecraft',
-        type: ActivityType.Playing
-    })
+            // Stop the server
+
+            interaction.reply("Server stopped");
+        }
+    }
 })
 
 client.login(process.env.TOKEN);
