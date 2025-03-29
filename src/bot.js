@@ -50,42 +50,61 @@ client.on('interactionCreate', async (interaction) => {
     
     // Start command
     if (interaction.commandName == 'start') {
+
+        // Cooldown check
         const currentTime = Date.now();
         if(currentTime < cooldownEndtime) {
-            interaction.reply(`The server was recently started/stopped. Please wait ${Math.ceil((cooldownEndtime - currentTime) / 1000)} seconds.`);
-        } else {
-            exec(`sudo systemctl start ${process.env.SERVICE}`, (error, stderr) => {
-                if(error){
-                    return interaction.reply(`Node error: ${error.message}`);
-                }
-                if (stderr) {
-                    return interaction.reply(`System error: ${stderr}`);
-                }
-                interaction.reply("Minecraft server started!");
-                cooldownEndtime = currentTime + cooldownLength;
-            });
+            return interaction.reply(`The server was recently started/stopped. Please wait ${Math.ceil((cooldownEndtime - currentTime) / 1000)} seconds.`);
         }
+
+        // Checks if server is running
+        exec(`sudo systemctl is-active ${process.env.SERVICE}`, (error, stdout) => {
+            if (stdout.trim() === "active") {
+                return interaction.reply("The server is already running!");
+            }
+        });
+
+        exec(`sudo systemctl start ${process.env.SERVICE}`, (error, stderr) => {
+            if(error){
+                return interaction.reply(`Node error: ${error.message}`);
+            }
+            if (stderr) {
+                return interaction.reply(`System error: ${stderr}`);
+            }
+            interaction.reply("Minecraft server started!");
+            cooldownEndtime = currentTime + cooldownLength;
+        });
+        
     }
     // Stop command
     if (interaction.commandName == 'stop') {
+
+        // Cooldown check
         const currentTime = Date.now();
         if(currentTime < cooldownEndtime) {
-            interaction.reply(`The server was recently started/stopped. Please wait ${Math.ceil((cooldownEndtime - currentTime) / 1000)} seconds.`);
-        } else {
-            // Reply must be deferred because stopping the server takes
-            // 10+ seconds. Discord command timeout is 3 seconds.
-            await interaction.deferReply();
-            exec(`sudo systemctl stop ${process.env.SERVICE}`, (error, stderr) => {
-                if(error){
-                    return interaction.followUp(`Node error: ${error.message}`);
-                }
-                if (stderr) {
-                    return interaction.followUp(`System error: ${stderr}`);
-                }
-                interaction.followUp("Minecraft server stopped!");
-                cooldownEndtime = currentTime + cooldownLength;
-            });
+            return interaction.reply(`The server was recently started/stopped. Please wait ${Math.ceil((cooldownEndtime - currentTime) / 1000)} seconds.`);
         }
+
+        // Checks if server is not running
+        exec(`sudo systemctl is-active ${process.env.SERVICE}`, (error, stdout) => {
+            if (!stdout.trim() === "active") {
+                return interaction.reply("The server is not running");
+            }
+        });
+
+        // Reply must be deferred because stopping the server takes
+        // 10+ seconds. Discord command timeout is 3 seconds.
+        await interaction.deferReply();
+        exec(`sudo systemctl stop ${process.env.SERVICE}`, (error, stderr) => {
+            if(error){
+                return interaction.followUp(`Node error: ${error.message}`);
+            }
+            if (stderr) {
+                return interaction.followUp(`System error: ${stderr}`);
+            }
+            interaction.followUp("Minecraft server stopped!");
+            cooldownEndtime = currentTime + cooldownLength;
+        });
     }
 });
 
