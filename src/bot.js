@@ -51,6 +51,10 @@ let cooldownEndtime = 0;
 // Handles commands
 client.on('interactionCreate', async (interaction) => {
     if (!interaction.isChatInputCommand()) { return; }
+
+    if(interaction.guild.id == process.env.GUILD_ID && !interaction.member.roles.cache.has(process.env.ROLE)){
+        return interaction.reply("You do not have permission.")
+    }
     
     // Start command
     if (interaction.commandName == 'start') {
