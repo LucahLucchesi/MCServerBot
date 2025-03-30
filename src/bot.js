@@ -95,7 +95,7 @@ client.on('interactionCreate', async (interaction) => {
 
         // Checks if server is not running
         exec(`sudo systemctl is-active ${process.env.SERVICE}`, (error, stdout) => {
-            if (!stdout.trim() === "active") {
+            if (!(stdout.trim() === "active")) {
                 return interaction.reply("The server is not running");
             }
         });
