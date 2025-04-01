@@ -65,19 +65,13 @@ client.on('interactionCreate', async (interaction) => {
             return interaction.reply(`The server was recently started/stopped. Please wait ${Math.ceil((cooldownEndtime - currentTime) / 1000)} seconds.`);
         }
 
-        // Checks if server is running
-        exec(`sudo systemctl is-active ${process.env.SERVICE}`, (stdout) => {
-            console.log(`${stdout}`);
-            // if (stdout.trim() === "active") {
-            //     return interaction.reply("The server is already running!");
-            // }
-        });
-
-        exec(`sudo systemctl start ${process.env.SERVICE}`, (error, stderr) => {
+        exec(`systemctl start ${process.env.SERVICE}`, (error, stdout, stderr) => {
             if(error){
+                console.log(err)
                 return interaction.reply(`Node error: ${error.message}`);
             }
             if (stderr) {
+                console.log(stderr)
                 return interaction.reply(`System error: ${stderr}`);
             }
             interaction.reply("Minecraft server started!");
@@ -94,22 +88,16 @@ client.on('interactionCreate', async (interaction) => {
             return interaction.reply(`The server was recently started/stopped. Please wait ${Math.ceil((cooldownEndtime - currentTime) / 1000)} seconds.`);
         }
 
-        // Checks if server is not running
-        exec(`sudo systemctl is-active ${process.env.SERVICE}`, (stdout) => {
-            console.log(`${stdout}`);
-            // if (stdout === "inactive") {
-            //     return interaction.reply("The server is not running");
-            // }
-        });
-
         // Reply must be deferred because stopping the server takes
         // 10+ seconds. Discord command timeout is 3 seconds.
         await interaction.deferReply();
-        exec(`sudo systemctl stop ${process.env.SERVICE}`, (error, stderr) => {
+        exec(`systemctl stop ${process.env.SERVICE}`, (error, stdout, stderr) => {
             if(error){
+                console.log(err)
                 return interaction.followUp(`Node error: ${error.message}`);
             }
             if (stderr) {
+                console.log(stderr)
                 return interaction.followUp(`System error: ${stderr}`);
             }
             interaction.followUp("Minecraft server stopped!");
