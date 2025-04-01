@@ -67,10 +67,10 @@ client.on('interactionCreate', async (interaction) => {
 
         // Checks if server is running
         exec(`sudo systemctl is-active ${process.env.SERVICE}`, (stdout) => {
-            console.log(stdout.trim(), typeof stdout);
-            if (stdout.trim() === "active") {
-                return interaction.reply("The server is already running!");
-            }
+            console.log(`${stdout}`);
+            // if (stdout.trim() === "active") {
+            //     return interaction.reply("The server is already running!");
+            // }
         });
 
         exec(`sudo systemctl start ${process.env.SERVICE}`, (error, stderr) => {
@@ -96,10 +96,10 @@ client.on('interactionCreate', async (interaction) => {
 
         // Checks if server is not running
         exec(`sudo systemctl is-active ${process.env.SERVICE}`, (stdout) => {
-            console.log(stdout.trim(), typeof stdout );
-            if (stdout.trim() === "inactive") {
-                return interaction.reply("The server is not running");
-            }
+            console.log(`${stdout}`);
+            // if (stdout === "inactive") {
+            //     return interaction.reply("The server is not running");
+            // }
         });
 
         // Reply must be deferred because stopping the server takes
