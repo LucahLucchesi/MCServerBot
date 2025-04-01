@@ -66,11 +66,14 @@ client.on('interactionCreate', async (interaction) => {
         }
 
         // Checks whether the server is running
-        execSync(`sudo systemctl is-active ${process.env.SERVICE}`, (error, stdout, stderr) => {
-            if(stdout.trim() === "active"){
+        try {
+            const status = execSync(`sudo systemctl is-active ${process.env.SERVICE}`).toString().trim();
+            if (status === "active") {
                 return interaction.reply("Server is already running!");
             }
-        })
+        } catch (error) {
+            // If systemctl fails, assume the service is not running
+        }
 
         exec(`sudo systemctl start ${process.env.SERVICE}`, (error, stdout, stderr) => {
             if(error){
@@ -96,11 +99,15 @@ client.on('interactionCreate', async (interaction) => {
         }
 
         // Checks whether the server is running
-        execSync(`sudo systemctl is-active ${process.env.SERVICE}`, (error, stdout, stderr) => {
-            if(!(stdout.trim() === "active")){
+        try {
+            const status = execSync(`sudo systemctl is-active ${process.env.SERVICE}`).toString().trim();
+            if (status !== "active") {
                 return interaction.reply("Server is not running!");
             }
-        })
+        } catch (error) {
+            // If systemctl fails, assume the service is not running
+            return interaction.reply("Server is not running!");
+        }
 
         // Reply must be deferred because stopping the server takes
         // 10+ seconds. Discord command timeout is 3 seconds.
