@@ -1,6 +1,6 @@
 require('dotenv').config();
 const { Client, GatewayIntentBits, ActivityType, REST, Routes } = require('discord.js');
-const { exec } = require('child_process')
+const { exec, execSync } = require('child_process')
 const client = new Client({
     intents: [GatewayIntentBits.Guilds]
 });
@@ -66,7 +66,7 @@ client.on('interactionCreate', async (interaction) => {
         }
 
         // Checks whether the server is running
-        exec(`sudo systemctl is-active ${process.env.SERVICE}`, (error, stdout, stderr) => {
+        execSync(`sudo systemctl is-active ${process.env.SERVICE}`, (error, stdout, stderr) => {
             if(stdout.trim() === "active"){
                 return interaction.reply("Server is already running!");
             }
@@ -96,9 +96,9 @@ client.on('interactionCreate', async (interaction) => {
         }
 
         // Checks whether the server is running
-        exec(`sudo systemctl is-active ${process.env.SERVICE}`, (error, stdout, stderr) => {
-            if(stdout.trim() === "inactive"){
-                return interaction.reply("Server is already running!");
+        execSync(`sudo systemctl is-active ${process.env.SERVICE}`, (error, stdout, stderr) => {
+            if(!(stdout.trim() === "active")){
+                return interaction.reply("Server is not running!");
             }
         })
 
