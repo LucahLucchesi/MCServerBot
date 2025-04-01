@@ -65,7 +65,13 @@ client.on('interactionCreate', async (interaction) => {
             return interaction.reply(`The server was recently started/stopped. Please wait ${Math.ceil((cooldownEndtime - currentTime) / 1000)} seconds.`);
         }
 
-        exec(`systemctl start ${process.env.SERVICE}`, (error, stdout, stderr) => {
+        exec(`sudo systemctl is-active ${process.env.SERVICE}`, (error, stdout, stderr) => {
+            if(stdout.trim() === "active"){
+                return interaction.reply("Server is already running!");
+            }
+        })
+
+        exec(`sudo systemctl start ${process.env.SERVICE}`, (error, stdout, stderr) => {
             if(error){
                 console.log(err)
                 return interaction.reply(`Node error: ${error.message}`);
@@ -91,7 +97,7 @@ client.on('interactionCreate', async (interaction) => {
         // Reply must be deferred because stopping the server takes
         // 10+ seconds. Discord command timeout is 3 seconds.
         await interaction.deferReply();
-        exec(`systemctl stop ${process.env.SERVICE}`, (error, stdout, stderr) => {
+        exec(`sudo systemctl stop ${process.env.SERVICE}`, (error, stdout, stderr) => {
             if(error){
                 console.log(err)
                 return interaction.followUp(`Node error: ${error.message}`);
