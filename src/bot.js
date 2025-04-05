@@ -130,6 +130,17 @@ client.on('interactionCreate', async (interaction) => {
     }
 
     if(interaction.commandName == 'status'){
+
+        // Checks whether the server is running
+        try {
+            const status = execSync(`sudo systemctl is-active ${process.env.SERVICE}`).toString().trim();
+            if (status !== "active") {
+                return interaction.reply("Server is not running!");
+            }
+        } catch (error) {
+            // If systemctl fails, assume the service is not running
+            return interaction.reply("Server is not running!");
+        }
         
         try {
             // Promises that the data will be found
