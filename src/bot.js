@@ -134,19 +134,31 @@ client.on('interactionCreate', async (interaction) => {
         try {
             // Promises that the data will be found
             // If there is an error, the data is replaced with Unknown so the promise is fulfilled
-            const [loadData, tempData, memData] = await Promise.all([
+            const [{ currentLoad: cpuLoad }, { main: cpuTemp }, { used: memUsed }] = await Promise.all([
                 status.currentLoad().catch(() => ({ currentLoad: "Unknown" })),
                 status.cpuTemperature().catch(() => ({ main: "Unknown" })),
                 status.mem().catch(() => ({ used: "Unknown" }))
             ]);
-    
-            // OR operator is used as a fallback if the data is in a bad format
+           
+            // Ternary operator is used to format the value if not unknown
             const statusEmbed = new EmbedBuilder()
                 .setTitle("Status")
                 .addFields(
-                    { name: 'CPU Usage', value: `${loadData.currentLoad}%` || "Unknown", inline: true },
-                    { name: 'CPU Temp', value: `${tempData.main}°C` || "Unknown", inline: true },
-                    { name: 'Ram Usage', value: `${memData.used}MB` || "Unknown", inline: true }
+                    {
+                        name: 'CPU Usage', 
+                        value: cpuLoad === "Unknown" ? "Unknown" : `${Math.round(cpuLoad * 100) / 100}%`,
+                        inline: true
+                    },
+                    {
+                        name: 'CPU Temp',
+                        value: cpuTemp === "Unknown" ? "Unknown" : `${cpuTemp}°C`,
+                        inline: true
+                    },
+                    {
+                        name: 'RAM Usage',
+                        value: memUsed === "Unknown" ? "Unknown" : `${(memUsed / 1024 ** 3).toFixed(2)} GB`,
+                        inline: true
+                    }
                 );
             
             await interaction.reply({ embeds: [statusEmbed] });
