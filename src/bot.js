@@ -130,28 +130,31 @@ client.on('interactionCreate', async (interaction) => {
     }
 
     if(interaction.commandName == 'status'){
-        cpuLoad = "Unknown"
-        cpuTemp = "Unknown"
-        memory = "Unknown"
-
-        status.currentLoad()
-            .then((data) => cpuLoad = data.currentLoad)
-            .catch((error) => console.error(error))
-        status.cpuTemperature()
-            .then((data) => data.main)
-            .catch((error) => console.error(error))
-        status.mem()
-            .then((data) => memory = data.used)
-            .catch((error) => console.error(error))
-
-        const statusEmbed = new EmbedBuilder()
-            .setTitle("Status")
-            .addFields(
-                { name: 'CPU Usage', value: cpuLoad, inline: true },
-                { name: 'CPU Temp', value: cpuTemp, inline: true },
-                { name: 'Ram Usage', value: memory, inline: true }
-            )
-        interaction.reply({ embeds: [statusEmbed] });
+        
+        try {
+            // Promises that the data will be found
+            // If there is an error, the data is replaced with Unknown so the promise is fulfilled
+            const [loadData, tempData, memData] = await Promise.all([
+                status.currentLoad().catch(() => ({ currentLoad: "Unknown" })),
+                status.cpuTemperature().catch(() => ({ main: "Unknown" })),
+                status.mem().catch(() => ({ used: "Unknown" }))
+            ]);
+    
+            // OR operator is used as a fallback if the data is in a bad format
+            const statusEmbed = new EmbedBuilder()
+                .setTitle("Status")
+                .addFields(
+                    { name: 'CPU Usage', value: `${loadData.currentLoad}%` || "Unknown", inline: true },
+                    { name: 'CPU Temp', value: `${tempData.main}°C` || "Unknown", inline: true },
+                    { name: 'Ram Usage', value: `${memData.used}MB` || "Unknown", inline: true }
+                );
+            
+            await interaction.reply({ embeds: [statusEmbed] });
+        } catch (error) {
+            console.error(error);
+            await interaction.reply({ content: "Failed to get system status.", ephemeral: true });
+        }
+        
     }
 });
 
