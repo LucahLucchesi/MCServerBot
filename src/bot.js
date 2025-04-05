@@ -60,8 +60,7 @@ client.on('interactionCreate', async (interaction) => {
     if (interaction.commandName == 'start') {
 
         // Cooldown check
-        const currentTime = Date.now();
-        if(currentTime < cooldownEndtime) {
+        if(Date.now() < cooldownEndtime) {
             return interaction.reply(`The server was recently started/stopped. Please wait ${Math.ceil((cooldownEndtime - currentTime) / 1000)} seconds.`);
         }
 
@@ -77,7 +76,7 @@ client.on('interactionCreate', async (interaction) => {
 
         exec(`sudo systemctl start ${process.env.SERVICE}`, (error, stdout, stderr) => {
             if(error){
-                console.log(err)
+                console.log(error)
                 return interaction.reply(`Node error: ${error.message}`);
             }
             if (stderr) {
@@ -85,7 +84,7 @@ client.on('interactionCreate', async (interaction) => {
                 return interaction.reply(`System error: ${stderr}`);
             }
             interaction.reply("Minecraft server started!");
-            cooldownEndtime = currentTime + cooldownLength;
+            cooldownEndtime = Date.now() + cooldownLength;
         });
         
     }
@@ -93,8 +92,7 @@ client.on('interactionCreate', async (interaction) => {
     if (interaction.commandName == 'stop') {
 
         // Cooldown check
-        const currentTime = Date.now();
-        if(currentTime < cooldownEndtime) {
+        if(Date.now() < cooldownEndtime) {
             return interaction.reply(`The server was recently started/stopped. Please wait ${Math.ceil((cooldownEndtime - currentTime) / 1000)} seconds.`);
         }
 
@@ -114,7 +112,7 @@ client.on('interactionCreate', async (interaction) => {
         await interaction.deferReply();
         exec(`sudo systemctl stop ${process.env.SERVICE}`, (error, stdout, stderr) => {
             if(error){
-                console.log(err)
+                console.log(error)
                 return interaction.followUp(`Node error: ${error.message}`);
             }
             if (stderr) {
@@ -122,7 +120,7 @@ client.on('interactionCreate', async (interaction) => {
                 return interaction.followUp(`System error: ${stderr}`);
             }
             interaction.followUp("Minecraft server stopped!");
-            cooldownEndtime = currentTime + cooldownLength;
+            cooldownEndtime = Date.now() + cooldownLength;
         });
     }
 });
