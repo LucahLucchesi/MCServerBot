@@ -1,6 +1,7 @@
 require('dotenv').config();
-const { Client, GatewayIntentBits, ActivityType, REST, Routes } = require('discord.js');
+const { Client, GatewayIntentBits, ActivityType, REST, Routes, EmbedBuilder, Embed } = require('discord.js');
 const { exec, execSync } = require('child_process')
+const status = require("systeminformation")
 const client = new Client({
     intents: [GatewayIntentBits.Guilds]
 });
@@ -15,6 +16,10 @@ const commands = [
     {
         name: 'stop',
         description: 'Stops the server'
+    },
+    {
+        name: 'status',
+        description: 'Get server and system status'
     }
 ];
 
@@ -122,6 +127,31 @@ client.on('interactionCreate', async (interaction) => {
             interaction.followUp("Minecraft server stopped!");
             cooldownEndtime = Date.now() + cooldownLength;
         });
+    }
+
+    if(interaction.commandName == 'status'){
+        cpuLoad = "Unknown"
+        cpuTemp = "Unknown"
+        memory = "Unknown"
+
+        status.currentLoad()
+            .then((data) => cpuLoad = data.currentLoad)
+            .catch((error) => console.error(error))
+        status.cpuTemperature()
+            .then((data) => data.main)
+            .catch((error) => console.error(error))
+        status.mem()
+            .then((data) => memory = data.used)
+            .catch((error) => console.error(error))
+
+        const statusEmbed = new EmbedBuilder()
+            .setTitle("Status")
+            .addFields(
+                { name: 'CPU Usage', value: cpuLoad, inline: true },
+                { name: 'CPU Temp', value: cpuTemp, inline: true },
+                { name: 'Ram Usage', value: memory, inline: true }
+            )
+        interaction.reply({ embeds: [statusEmbed] });
     }
 });
 
