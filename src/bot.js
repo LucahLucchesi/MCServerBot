@@ -145,21 +145,15 @@ client.on('interactionCreate', async (interaction) => {
         try {
             // Promises that the data will be found
             // If there is an error, the data is replaced with Unknown so the promise is fulfilled
-            const [{ currentLoad: cpuLoad }, { main: cpuTemp }, { used: memUsed }] = await Promise.all([
-                status.currentLoad().catch(() => ({ currentLoad: "Unknown" })),
+            const [{ main: cpuTemp }, { used: memUsed }] = await Promise.all([
                 status.cpuTemperature().catch(() => ({ main: "Unknown" })),
-                status.mem().catch(() => ({ used: "Unknown" }))
+                status.services('minecraft').catch(() => ({ mem: "Unknown" }))
             ]);
            
             // Ternary operator is used to format the value if not unknown
             const statusEmbed = new EmbedBuilder()
                 .setTitle("Status")
                 .addFields(
-                    {
-                        name: 'CPU Usage', 
-                        value: cpuLoad === "Unknown" ? "Unknown" : `${Math.round(cpuLoad * 100) / 100}%`,
-                        inline: true
-                    },
                     {
                         name: 'CPU Temp',
                         value: cpuTemp === "Unknown" ? "Unknown" : `${cpuTemp}°C`,
