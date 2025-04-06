@@ -148,7 +148,7 @@ client.on('interactionCreate', async (interaction) => {
         try {
             const configData = await getData(process.env.CONFIG)
             const playerStatsPath = configData.serverPath + `/world/stats/${uuid}.json`
-            const playerStatsData = await getData(statsPath)
+            const playerStatsData = await getData(playerStatsPath)
         } catch (err) {
             console.error('Could not read config or stats data', err)
             return interaction.reply('Could not read stats data')
