@@ -1,6 +1,7 @@
 require('dotenv').config();
 const { Client, GatewayIntentBits, ActivityType, REST, Routes } = require('discord.js');
 const { exec, execSync } = require('child_process')
+const fs = require('fs').promises
 const client = new Client({
     intents: [GatewayIntentBits.Guilds]
 });
@@ -15,6 +16,18 @@ const commands = [
     {
         name: 'stop',
         description: 'Stops the server'
+    },
+    {
+        name: 'stats',
+        description: 'See your server statistics',
+        options: [
+            {
+              name: 'username',
+              description: 'Minecraft username',
+              type: 3, // STRING
+              required: true,
+            }
+        ]
     }
 ];
 
@@ -123,6 +136,37 @@ client.on('interactionCreate', async (interaction) => {
             cooldownEndtime = Date.now() + cooldownLength;
         });
     }
+    if (interaction.commandName == 'stats') {
+        const username = interaction.options.getString('username');
+        const response = await fetch(`https://api.mojang.com/users/profiles/minecraft/${username}`);
+        
+        if(!response.ok) { return interaction.reply("Username not found!") }
+
+        const data = await response.json()
+        const uuid = data.id;
+
+        try {
+            const configData = await getData(process.env.CONFIG)
+            const playerStatsPath = configData.serverPath + `/world/stats/${uuid}.json`
+            const playerStatsData = await getData(statsPath)
+        } catch (err) {
+            console.error('Could not read config or stats data', err)
+            return interaction.reply('Could not read stats data')
+        }
+        
+        interaction.reply('This is working')
+        
+
+    }
 });
 
 client.login(process.env.TOKEN);
+
+async function getData(path) {
+    try {
+        const data = await fs.readFile(path, 'utf8');
+        return JSON.parse(data);
+    } catch (err) {
+        console.error('Error reading file:', err);
+    }
+}
