@@ -144,7 +144,13 @@ client.on('interactionCreate', async (interaction) => {
         if(!response.ok) { return interaction.reply("Username not found!") }
 
         const data = await response.json()
-        const uuid = data.id;
+        // Mojang API returns a raw UUID without hyphens
+        const uuid = new StringBuilder(data.id)
+            .insert(20, '-')
+            .insert(16, '-')
+            .insert(12, '-')
+            .insert(8, '-')
+            .toString();
 
         try {
             const configData = await getData(process.env.CONFIG)
@@ -154,9 +160,9 @@ client.on('interactionCreate', async (interaction) => {
             const stoneMined = playerStatsData.stats["minecraft:mined"]["minecraft:stone"];
 
             const embed = new EmbedBuilder()
-            .setTitle(`${username}'s stats`)
-            addFields(
-                { name: 'Stone Mined', value: stoneMined}
+                .setTitle(`${username}'s stats`)
+                .addFields(
+                    { name: 'Stone Mined', value: stoneMined}
             );
 
             interaction.reply({ embeds: [embed]})
