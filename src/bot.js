@@ -151,7 +151,7 @@ client.on('interactionCreate', async (interaction) => {
             const playerStatsPath = configData.serverPath + `/world/stats/${uuid}.json`
             const playerStatsData = await getData(playerStatsPath)
 
-            const stoneMined = playerStatsData.stats['minecraft:mined']["minecraft:stone"];
+            const stoneMined = playerStatsData.stats["minecraft:mined"]["minecraft:stone"];
 
             const embed = new EmbedBuilder()
             .setTitle(`${username}'s stats`)
@@ -160,7 +160,7 @@ client.on('interactionCreate', async (interaction) => {
             );
 
             interaction.reply({ embeds: [embed]})
-            
+
         } catch (err) {
             console.error('Could not read config or stats data', err)
             return interaction.reply('Could not read stats data')
@@ -183,14 +183,4 @@ async function getData(path) {
     } catch (err) {
         console.error('Error reading file:', err);
     }
-}
-
-async function createEmbed(title, fields) {
-    const embed = new EmbedBuilder().setTitle(title);
-
-    fields.array.forEach(field => {
-        embed.addFields()
-    });
-        
-    return embed;
 }
