@@ -2,6 +2,7 @@ require('dotenv').config();
 const { Client, GatewayIntentBits, ActivityType, REST, Routes } = require('discord.js');
 const { exec, execSync } = require('child_process')
 const fs = require('fs').promises
+const { EmbedBuilder } = require('discord.js');
 const client = new Client({
     intents: [GatewayIntentBits.Guilds]
 });
@@ -149,12 +150,25 @@ client.on('interactionCreate', async (interaction) => {
             const configData = await getData(process.env.CONFIG)
             const playerStatsPath = configData.serverPath + `/world/stats/${uuid}.json`
             const playerStatsData = await getData(playerStatsPath)
+
+            const stoneMined = playerStatsData.stats['minecraft:mined']["minecraft:stone"];
+
+            const embed = new EmbedBuilder()
+            .setTitle(`${username}'s stats`)
+            addFields(
+                { name: 'Stone Mined', value: stoneMined}
+            );
+
+            interaction.reply({ embeds: [embed]})
+            
         } catch (err) {
             console.error('Could not read config or stats data', err)
             return interaction.reply('Could not read stats data')
         }
+
         
-        interaction.reply('This is working')
+
+        
         
 
     }
@@ -169,4 +183,14 @@ async function getData(path) {
     } catch (err) {
         console.error('Error reading file:', err);
     }
+}
+
+async function createEmbed(title, fields) {
+    const embed = new EmbedBuilder().setTitle(title);
+
+    fields.array.forEach(field => {
+        embed.addFields()
+    });
+        
+    return embed;
 }
