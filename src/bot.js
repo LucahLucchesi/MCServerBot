@@ -145,12 +145,10 @@ client.on('interactionCreate', async (interaction) => {
 
         const data = await response.json()
         // Mojang API returns a raw UUID without hyphens
-        const uuid = new StringBuilder(data.id)
-            .insert(20, '-')
-            .insert(16, '-')
-            .insert(12, '-')
-            .insert(8, '-')
-            .toString();
+        const uuid = data.id.replace(
+            /^([0-9a-f]{8})([0-9a-f]{4})([0-9a-f]{4})([0-9a-f]{4})([0-9a-f]{12})$/i,
+            '$1-$2-$3-$4-$5'
+        );
 
         try {
             const configData = await getData(process.env.CONFIG)
