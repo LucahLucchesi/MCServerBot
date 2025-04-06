@@ -155,7 +155,7 @@ client.on('interactionCreate', async (interaction) => {
             const playerStatsPath = configData.serverPath + `/world/stats/${uuid}.json`
             const playerStatsData = await getData(playerStatsPath)
 
-            const stoneMined = playerStatsData.stats["minecraft:mined"]["minecraft:stone"];
+            const stoneMined = playerStatsData.stats["minecraft:mined"]["minecraft:stone"].toString();
 
             const embed = new EmbedBuilder()
                 .setTitle(`${username}'s stats`)
@@ -182,6 +182,7 @@ client.login(process.env.TOKEN);
 
 async function getData(path) {
     try {
+        console.log(`Attempting to parse JSON file at ${path}`)
         const data = await fs.readFile(path, 'utf8');
         return JSON.parse(data);
     } catch (err) {
