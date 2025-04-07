@@ -169,10 +169,10 @@ client.on('interactionCreate', async (interaction) => {
 
             const embed = new EmbedBuilder()
                 .setTitle(`${username}'s stats`)
+                .setDescription('**Blocks Mined**')
                 .addFields(
-                    { name: '\u200B', value: '**Blocks Mined**' },
-                    { name: 'Diamond Ore', value: diamondMined, inline: true },
-                    { name: 'Stone', value: stoneMined, inline: true }
+                    { name: 'Stone', value: stoneMined, inline: true },
+                    { name: 'Diamond Ore', value: diamondMined, inline: true } 
             );
 
             interaction.reply({ embeds: [embed]})
