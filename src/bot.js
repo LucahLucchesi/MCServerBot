@@ -34,10 +34,14 @@ const commands = [
 
 const rest = new REST({ version: '10'}).setToken(process.env.TOKEN);
 
+let configData;
+
 client.on('ready', () => {
     // Attempts to register command
     (async () => {
         try {
+            configData = await getData(process.env.CONFIG);
+
             console.log('Registering commands...');
             await rest.put(
                 Routes.applicationGuildCommands(process.env.CLIENT_ID, process.env.GUILD_ID),
@@ -48,6 +52,8 @@ client.on('ready', () => {
                 { body: commands}
             );
             console.log('Commands registered.');
+
+
         } catch (error) {
             console.log(`Error: ${error}`);
         };
@@ -143,7 +149,7 @@ client.on('interactionCreate', async (interaction) => {
         
         if(!response.ok) { return interaction.reply("Username not found!") }
 
-        const data = await response.json()
+        const data = await response.json();
         // Mojang API returns a raw UUID without hyphens
         const uuid = data.id.replace(
             /^([0-9a-f]{8})([0-9a-f]{4})([0-9a-f]{4})([0-9a-f]{4})([0-9a-f]{12})$/i,
@@ -151,15 +157,20 @@ client.on('interactionCreate', async (interaction) => {
         );
 
         try {
-            const configData = await getData(process.env.CONFIG)
-            const playerStatsPath = configData.serverPath + `/world/stats/${uuid}.json`
-            const playerStatsData = await getData(playerStatsPath)
+            const playerStatsPath = configData.serverPath + `/world/stats/${uuid}.json`;
+            const playerStatsData = await getData(playerStatsPath);
 
-            const stoneMined = playerStatsData.stats["minecraft:mined"]["minecraft:stone"].toString();
+            const diamondMined = (
+                (playerStatsData.stats["minecraft:mined"]["minecraft:diamond_ore"] ?? 0) +
+                (playerStatsData.stats["minecraft:mined"]["minecraft:deepslate_diamond_ore"] ?? 0)
+            ).toString();
+            const stoneMined = (playerStatsData.stats["minecraft:mined"]["minecraft:stone"] ?? 0).toString();
+            
 
             const embed = new EmbedBuilder()
                 .setTitle(`${username}'s stats`)
                 .addFields(
+                    { name: 'Diamond Mined', value: diamondMined},
                     { name: 'Stone Mined', value: stoneMined}
             );
 
@@ -169,12 +180,6 @@ client.on('interactionCreate', async (interaction) => {
             console.error('Could not read config or stats data', err)
             return interaction.reply('Could not read stats data')
         }
-
-        
-
-        
-        
-
     }
 });
 
