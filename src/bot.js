@@ -3,14 +3,9 @@ const { Client, GatewayIntentBits, ActivityType, REST, Routes } = require('disco
 const { exec, execSync } = require('child_process')
 const fs = require('fs').promises
 const { EmbedBuilder } = require('discord.js');
-const client = new Client({
-    intents: [GatewayIntentBits.Guilds]
-});
-// Command cooldown in milliseconds (m * s * ms)
-const cooldownLength = 1 * 20 * 1000;
-
+const client = new Client({ intents: [GatewayIntentBits.Guilds] });
 const commands = [
-{
+    {
         name: 'start',
         description: 'Starts the server'
     },
@@ -33,40 +28,35 @@ const commands = [
 ];
 
 const rest = new REST({ version: '10'}).setToken(process.env.TOKEN);
-
+const cooldownLength = 1 * 20 * 1000; // Cooldown length in milliseconds
+let cooldownEndtime = 0;
 let configData;
 
-client.on('ready', () => {
+client.on('ready', async () => {
+
+    configData = await getData(process.env.CONFIG);
+
     // Attempts to register command
-    (async () => {
-        try {
-            configData = await getData(process.env.CONFIG);
-
-            console.log('Registering commands...');
-            await rest.put(
-                Routes.applicationGuildCommands(process.env.CLIENT_ID, process.env.GUILD_ID),
-                { body: commands}
-            );
-            await rest.put(
-                Routes.applicationGuildCommands(process.env.CLIENT_ID, process.env.DEV_GUILD_ID),
-                { body: commands}
-            );
-            console.log('Commands registered.');
-
-
-        } catch (error) {
-            console.log(`Error: ${error}`);
-        };
-    })();
+    try {
+        console.log('Registering commands...');
+        await rest.put(
+            Routes.applicationGuildCommands(process.env.CLIENT_ID, process.env.GUILD_ID),
+            { body: commands}
+        );
+        await rest.put(
+            Routes.applicationGuildCommands(process.env.CLIENT_ID, process.env.DEV_GUILD_ID),
+            { body: commands}
+        );
+        console.log('Commands registered.');
+    } catch (error) {
+        console.log(`Error registering commands: ${error}`);
+    };
     console.log(`Logged in as ${client.user.tag}.`);
     client.user.setActivity({
         name: 'Minecraft',
         type: ActivityType.Playing
     });
 });
-
-// Stores when the cooldown is over
-let cooldownEndtime = 0;
 
 // Handles commands
 client.on('interactionCreate', async (interaction) => {
