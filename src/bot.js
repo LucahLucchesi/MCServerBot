@@ -154,16 +154,29 @@ client.on('interactionCreate', async (interaction) => {
                 (playerStatsData.stats["minecraft:mined"]["minecraft:diamond_ore"] ?? 0) +
                 (playerStatsData.stats["minecraft:mined"]["minecraft:deepslate_diamond_ore"] ?? 0)
             ).toString();
+            const copperMined = (
+                (playerStatsData.stats["minecraft:mined"]["minecraft:copper_ore"] ?? 0) +
+                (playerStatsData.stats["minecraft:mined"]["minecraft:deepslate_copper_ore"] ?? 0)
+            ).toString();
+
             const stoneMined = (playerStatsData.stats["minecraft:mined"]["minecraft:stone"] ?? 0).toString();
-            
+            const playtime_ticks = (playerStatsData.stats["minecraft:custom"]["minecraft:play_time"] ?? 0);
+            const timeSinceDeath_ticks = (playerStatsData.stats["minecraft:custom"]["minecraft:time_since_death"] ?? 0);
+            const playtime = formatTime(playtime_ticks)
+            const timeSinceDeath = formatTime(timeSinceDeath_ticks)
 
             const embed = new EmbedBuilder()
                 .setTitle(`${username}'s stats`)
-                .setDescription('**Blocks Mined**')
+                .addFields(
+                    { name: 'Playtime', value: playtime, inline: true },
+                    { name: 'Time Since Death', value: timeSinceDeath, inline: true },
+                    { name: '\u200B', value: '\u200B', inline: true }
+                )
                 .addFields(
                     { name: 'Stone', value: stoneMined, inline: true },
-                    { name: 'Diamond Ore', value: diamondMined, inline: true } 
-            );
+                    { name: 'Diamond Ore', value: diamondMined, inline: true },
+                    { name: 'Copper Ore', value: copperMined, inline: true }
+                );
 
             interaction.reply({ embeds: [embed]})
 
@@ -184,4 +197,14 @@ async function getData(path) {
     } catch (err) {
         console.error('Error reading file:', err);
     }
+}
+
+function formatTime(ticks) {
+    if(ticks == 0) { return '0'}
+
+    const seconds = ticks / 20;
+    const hours = Math.floor(seconds / 3600).toString();
+    const minutes = Math.floor((seconds % 3600) / 60).toString();
+
+    return `${hours}h ${minutes}m`;
 }
