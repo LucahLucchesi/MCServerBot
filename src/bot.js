@@ -24,6 +24,21 @@ const commands = [
               required: true,
             }
         ]
+    },
+    {
+        name: 'leaderboard',
+        description: 'Compare your stats',
+        options: [
+            {
+                name: 'stat',
+                description: 'the statistic to display',
+                type: 3,
+                required: true,
+                choices: [
+                    { name: 'playtime', value: 'play_time' }
+                ]
+            }
+        ]
     }
 ];
 
@@ -185,7 +200,55 @@ client.on('interactionCreate', async (interaction) => {
             return interaction.reply('Could not read stats data')
         }
     }
+    if (interaction.commandName == 'leaderboard') {
+        console.log('hello');
+        const stat = interaction.options.getString('stat');
+        const playerStatsDirectory = configData.serverPath + '/world/stats/';
+
+        let players = {};
+        try {
+            const files = await fs.readdir(playerStatsDirectory);
+            
+            for(const fileName of files) {
+                const uuid = fileName.replace('.json', '').replace(
+                    /^([0-9a-f]{8})([0-9a-f]{4})([0-9a-f]{4})([0-9a-f]{4})([0-9a-f]{12})$/i,
+                    '$1-$2-$3-$4-$5');
+                try {
+                    const response = await fetch(`https://api.minecraftservices.com/minecraft/profile/lookup/${uuid}`);
+                    if(response.ok) { 
+                        const data = await response.json();
+                        const username = data.name;
+                        const playerStatsData = await getData(playerStatsDirectory + fileName);
+                        const playtime_ticks = (playerStatsData.stats["minecraft:custom"]["minecraft:play_time"] ?? 0);
+
+                        players[username] = playtime_ticks;
+                    }
+                } catch (err) {
+                    console.log(`Error fetching or processing data for UUID ${uuid}:`, err);
+                }
+            }
+                
+
+
+            const sortedPlayers = Object.fromEntries(
+                Object.entries(players)
+                .sort(([, a], [, b]) => b - a)  // Sort by value in descending order
+            );
+
+            const embed = new EmbedBuilder().setTitle('Leaderboard')
+            
+                
+            for(const [username, playtime_ticks] of Object.entries(sortedPlayers)) {
+                embed.addFields({ name: `${username}: ${formatTime(playtime_ticks)}`, value: '\u200B'} );
+            }    
+            await interaction.reply({ embeds: [embed]});
+        } catch (err) {
+            console.log('Error reading directory: ', err);
+            return interaction.reply('Failed to get player data');
+        }
+    }
 });
+
 
 client.login(process.env.TOKEN);
 
@@ -201,10 +264,13 @@ async function getData(path) {
 
 function formatTime(ticks) {
     if(ticks == 0) { return '0'}
-
-    const seconds = ticks / 20;
-    const hours = Math.floor(seconds / 3600).toString();
-    const minutes = Math.floor((seconds % 3600) / 60).toString();
-
-    return `${hours}h ${minutes}m`;
+    try {
+        const seconds = ticks / 20;
+        const hours = Math.floor(seconds / 3600).toString();
+        const minutes = Math.floor((seconds % 3600) / 60).toString();
+        return `${hours}h ${minutes}m`;
+    } catch (err) {
+        console.log('Error formatting time', err);
+        return 0;
+    }
 }
