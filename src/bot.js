@@ -46,14 +46,26 @@ const rest = new REST({ version: '10'}).setToken(process.env.TOKEN);
 const cooldownLength = 1 * 20 * 1000; // Cooldown length in milliseconds
 let cooldownEndtime = 0;
 let configData;
+let playerUUIDs = new Map();
+
 
 client.on('ready', async () => {
-
-    configData = await getData(process.env.CONFIG);
-
-    // Attempts to register command
+    let playerlist;
+    // Get config file and player list
     try {
-        console.log('Registering commands...');
+        configData = await getData(process.env.CONFIG);
+        playerlist = await getData(configData.serverPath + '/whitelist.json');
+    } catch (err) {
+        console.log('Config error: ', err);
+    }
+
+    playerlist.forEach(player => {
+        playerUUIDs.set(player.name, player.uuid);
+    })
+    
+    // Attempts to register command
+    console.log('Registering commands...');
+    try {
         await rest.put(
             Routes.applicationGuildCommands(process.env.CLIENT_ID, process.env.GUILD_ID),
             { body: commands}
@@ -63,9 +75,10 @@ client.on('ready', async () => {
             { body: commands}
         );
         console.log('Commands registered.');
-    } catch (error) {
-        console.log(`Error registering commands: ${error}`);
+    } catch (err) {
+        console.log('Error registering commands', err);
     };
+
     console.log(`Logged in as ${client.user.tag}.`);
     client.user.setActivity({
         name: 'Minecraft',
@@ -201,51 +214,35 @@ client.on('interactionCreate', async (interaction) => {
         }
     }
     if (interaction.commandName == 'leaderboard') {
-        console.log('hello');
         const stat = interaction.options.getString('stat');
         const playerStatsDirectory = configData.serverPath + '/world/stats/';
 
-        let players = {};
-        try {
-            const files = await fs.readdir(playerStatsDirectory);
-            
-            for(const fileName of files) {
-                const uuid = fileName.replace('.json', '').replace(
-                    /^([0-9a-f]{8})([0-9a-f]{4})([0-9a-f]{4})([0-9a-f]{4})([0-9a-f]{12})$/i,
-                    '$1-$2-$3-$4-$5');
-                try {
-                    const response = await fetch(`https://api.minecraftservices.com/minecraft/profile/lookup/${uuid}`);
-                    if(response.ok) { 
-                        const data = await response.json();
-                        const username = data.name;
-                        const playerStatsData = await getData(playerStatsDirectory + fileName);
-                        const playtime_ticks = (playerStatsData.stats["minecraft:custom"]["minecraft:play_time"] ?? 0);
+        let players = [];
 
-                        players[username] = playtime_ticks;
-                    }
-                } catch (err) {
-                    console.log(`Error fetching or processing data for UUID ${uuid}:`, err);
-                }
+        // Retrieves a player's playtime from their statistics file by uuid and pushes it to a new array
+        for (const [name, uuid] of playerUUIDs) {
+            try {
+                const playerStatsData = await getData(playerStatsDirectory + `${uuid}.json`);
+                const playtime_ticks = playerStatsData.stats["minecraft:custom"]["minecraft:play_time"] ?? 0;
+                players.push({ name: `${name}`, playtime: playtime_ticks})
+            } catch (err) {
+                console.log(`Error putting ${name} on the leaderboard: `,err);
             }
-                
-
-
-            const sortedPlayers = Object.fromEntries(
-                Object.entries(players)
-                .sort(([, a], [, b]) => b - a)  // Sort by value in descending order
-            );
-
-            const embed = new EmbedBuilder().setTitle('Leaderboard')
-            
-                
-            for(const [username, playtime_ticks] of Object.entries(sortedPlayers)) {
-                embed.addFields({ name: `${username}: ${formatTime(playtime_ticks)}`, value: '\u200B'} );
-            }    
-            await interaction.reply({ embeds: [embed]});
-        } catch (err) {
-            console.log('Error reading directory: ', err);
-            return interaction.reply('Failed to get player data');
         }
+
+        // Sort in decending order
+        players.sort((a, b) => b.playtime - a.playtime);
+
+        const fields = players.map((player) => ({
+            name: player.name,
+            value: formatTime(player.playtime)
+        }));
+
+        const embed = new EmbedBuilder()
+            .setTitle('Leaderboard')
+            .addFields(fields);
+
+        interaction.reply({ embeds: [embed]} );
     }
 });
 
@@ -253,12 +250,13 @@ client.on('interactionCreate', async (interaction) => {
 client.login(process.env.TOKEN);
 
 async function getData(path) {
+    console.log(`Attempting to parse JSON file at ${path}`)
     try {
-        console.log(`Attempting to parse JSON file at ${path}`)
         const data = await fs.readFile(path, 'utf8');
         return JSON.parse(data);
     } catch (err) {
         console.error('Error reading file:', err);
+        throw err;
     }
 }
 
